@@ -14,16 +14,505 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          camera_id: string
+          client_id: string
+          created_at: string
+          id: string
+          is_acknowledged: boolean
+          message: string
+          metadata: Json | null
+          severity: Database["public"]["Enums"]["alert_severity"]
+          tenant_id: string
+          type: Database["public"]["Enums"]["alert_type"]
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          camera_id: string
+          client_id: string
+          created_at?: string
+          id?: string
+          is_acknowledged?: boolean
+          message: string
+          metadata?: Json | null
+          severity?: Database["public"]["Enums"]["alert_severity"]
+          tenant_id: string
+          type: Database["public"]["Enums"]["alert_type"]
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          camera_id?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_acknowledged?: boolean
+          message?: string
+          metadata?: Json | null
+          severity?: Database["public"]["Enums"]["alert_severity"]
+          tenant_id?: string
+          type?: Database["public"]["Enums"]["alert_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_camera_id_fkey"
+            columns: ["camera_id"]
+            isOneToOne: false
+            referencedRelation: "cameras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          resource_id: string | null
+          resource_type: string
+          tenant_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type: string
+          tenant_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type?: string
+          tenant_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cameras: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          is_recording: boolean
+          location: string
+          name: string
+          rtsp_url: string | null
+          status: Database["public"]["Enums"]["camera_status"]
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          is_recording?: boolean
+          location: string
+          name: string
+          rtsp_url?: string | null
+          status?: Database["public"]["Enums"]["camera_status"]
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_recording?: boolean
+          location?: string
+          name?: string
+          rtsp_url?: string | null
+          status?: Database["public"]["Enums"]["camera_status"]
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cameras_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cameras_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clients: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          plan: Database["public"]["Enums"]["partner_plan"]
+          status: Database["public"]["Enums"]["partner_status"]
+          tenant_id: string
+          type: Database["public"]["Enums"]["client_type"]
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          plan?: Database["public"]["Enums"]["partner_plan"]
+          status?: Database["public"]["Enums"]["partner_status"]
+          tenant_id: string
+          type: Database["public"]["Enums"]["client_type"]
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          plan?: Database["public"]["Enums"]["partner_plan"]
+          status?: Database["public"]["Enums"]["partner_status"]
+          tenant_id?: string
+          type?: Database["public"]["Enums"]["client_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ip_authorizations: {
+        Row: {
+          created_at: string
+          description: string | null
+          domain: string | null
+          id: string
+          ip_address: unknown
+          is_active: boolean
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          domain?: string | null
+          id?: string
+          ip_address: unknown
+          is_active?: boolean
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          domain?: string | null
+          id?: string
+          ip_address?: unknown
+          is_active?: boolean
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ip_authorizations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      licenses: {
+        Row: {
+          ai_features: string[] | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          license_type: string
+          max_cameras: number
+          max_cloud_storage_gb: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          ai_features?: string[] | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          license_type: string
+          max_cameras?: number
+          max_cloud_storage_gb?: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          ai_features?: string[] | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          license_type?: string
+          max_cameras?: number
+          max_cloud_storage_gb?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "licenses_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          device_info: string | null
+          expires_at: string
+          id: string
+          ip_address: unknown
+          is_active: boolean
+          last_activity: string
+          tenant_id: string | null
+          user_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          device_info?: string | null
+          expires_at?: string
+          id?: string
+          ip_address: unknown
+          is_active?: boolean
+          last_activity?: string
+          tenant_id?: string | null
+          user_id: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          device_info?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: unknown
+          is_active?: boolean
+          last_activity?: string
+          tenant_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_stats: {
+        Row: {
+          active_clients: number
+          id: string
+          last_updated: string
+          monthly_alerts: number
+          monthly_revenue: number | null
+          online_cameras: number
+          tenant_id: string
+          total_cameras: number
+        }
+        Insert: {
+          active_clients?: number
+          id?: string
+          last_updated?: string
+          monthly_alerts?: number
+          monthly_revenue?: number | null
+          online_cameras?: number
+          tenant_id: string
+          total_cameras?: number
+        }
+        Update: {
+          active_clients?: number
+          id?: string
+          last_updated?: string
+          monthly_alerts?: number
+          monthly_revenue?: number | null
+          online_cameras?: number
+          tenant_id?: string
+          total_cameras?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_stats_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          plan: Database["public"]["Enums"]["partner_plan"]
+          status: Database["public"]["Enums"]["partner_status"]
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          phone?: string | null
+          plan?: Database["public"]["Enums"]["partner_plan"]
+          status?: Database["public"]["Enums"]["partner_status"]
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          plan?: Database["public"]["Enums"]["partner_plan"]
+          status?: Database["public"]["Enums"]["partner_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          tenant_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          tenant_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          tenant_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_tenant: {
+        Args: { _user_id: string }
+        Returns: string
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _tenant_id?: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      alert_severity: "low" | "medium" | "high" | "critical"
+      alert_type:
+        | "movement"
+        | "person_detected"
+        | "intrusion"
+        | "object_detection"
+      app_role: "super_admin" | "partner_admin" | "client_user"
+      camera_status: "online" | "offline" | "maintenance"
+      client_type: "pf" | "pj"
+      partner_plan: "basic" | "premium" | "enterprise"
+      partner_status: "active" | "suspended" | "inactive"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +639,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      alert_severity: ["low", "medium", "high", "critical"],
+      alert_type: [
+        "movement",
+        "person_detected",
+        "intrusion",
+        "object_detection",
+      ],
+      app_role: ["super_admin", "partner_admin", "client_user"],
+      camera_status: ["online", "offline", "maintenance"],
+      client_type: ["pf", "pj"],
+      partner_plan: ["basic", "premium", "enterprise"],
+      partner_status: ["active", "suspended", "inactive"],
+    },
   },
 } as const
