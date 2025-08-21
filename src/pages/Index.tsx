@@ -1,14 +1,35 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import RoleSelector from "@/components/RoleSelector";
+import SuperAdminDashboard from "@/components/SuperAdminDashboard";
+import PartnerDashboard from "@/components/PartnerDashboard";
+import ClientDashboard from "@/components/ClientDashboard";
+
+type Role = 'super-admin' | 'partner' | 'client' | null;
 
 const Index = () => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
-  );
+  const [selectedRole, setSelectedRole] = useState<Role>(null);
+
+  const handleRoleSelect = (role: Role) => {
+    setSelectedRole(role);
+  };
+
+  const handleBack = () => {
+    setSelectedRole(null);
+  };
+
+  if (selectedRole === 'super-admin') {
+    return <SuperAdminDashboard onBack={handleBack} />;
+  }
+
+  if (selectedRole === 'partner') {
+    return <PartnerDashboard onBack={handleBack} />;
+  }
+
+  if (selectedRole === 'client') {
+    return <ClientDashboard onBack={handleBack} />;
+  }
+
+  return <RoleSelector onRoleSelect={handleRoleSelect} />;
 };
 
 export default Index;
