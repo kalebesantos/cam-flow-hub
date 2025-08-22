@@ -2,25 +2,59 @@ import { ArrowLeft, Camera, Users, AlertTriangle, TrendingUp, Plus, Eye } from "
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useEffect } from "react";
+import { useSupabaseData } from "@/hooks/useSupabase";
 
 interface PartnerDashboardProps {
   onBack: () => void;
 }
 
 const PartnerDashboard = ({ onBack }: PartnerDashboardProps) => {
+  const {
+    loading,
+    error,
+    partnerClients,
+    partnerStats,
+    fetchPartnerData
+  } = useSupabaseData();
+
+  // For demo purposes, using the first tenant
+  const DEMO_TENANT_ID = '550e8400-e29b-41d4-a716-446655440001';
+
+  useEffect(() => {
+    fetchPartnerData(DEMO_TENANT_ID);
+  }, []);
+
   const stats = [
-    { title: "Clientes Ativos", value: "45", change: "+5", icon: Users, color: "text-security-primary" },
-    { title: "Câmeras Online", value: "234", change: "+12", icon: Camera, color: "text-security-success" },
-    { title: "Alertas IA (24h)", value: "18", change: "-3", icon: AlertTriangle, color: "text-security-warning" },
-    { title: "Receita Mensal", value: "R$ 28.5k", change: "+8%", icon: TrendingUp, color: "text-security-accent" }
+    { title: "Clientes Ativos", value: partnerStats?.active_clients?.toString() || "0", change: "+5", icon: Users, color: "text-security-primary" },
+    { title: "Câmeras Online", value: partnerStats?.online_cameras?.toString() || "0", change: "+12", icon: Camera, color: "text-security-success" },
+    { title: "Alertas IA (24h)", value: partnerStats?.monthly_alerts?.toString() || "0", change: "-3", icon: AlertTriangle, color: "text-security-warning" },
+    { title: "Receita Mensal", value: `R$ ${(partnerStats?.monthly_revenue || 0).toLocaleString('pt-BR')}`, change: "+8%", icon: TrendingUp, color: "text-security-accent" }
   ];
 
-  const clients = [
-    { name: "Loja Central Shopping", type: "PJ", cameras: 8, status: "Online", alerts: 2, plan: "Premium" },
-    { name: "Maria Silva Residência", type: "PF", cameras: 4, status: "Online", alerts: 0, plan: "Básico" },
-    { name: "Oficina AutoPeças", type: "PJ", cameras: 12, status: "Offline", alerts: 5, plan: "Empresarial" },
-    { name: "João Santos Casa", type: "PF", cameras: 6, status: "Online", alerts: 1, plan: "Premium" }
-  ];
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-security-primary"></div>
+          <p className="mt-4 text-muted-foreground">Carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-destructive">Erro: {error}</p>
+          <Button onClick={() => fetchPartnerData(DEMO_TENANT_ID)} className="mt-4">
+            Tentar Novamente
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -88,25 +122,25 @@ const PartnerDashboard = ({ onBack }: PartnerDashboardProps) => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {clients.map((client, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors">
+                  {partnerClients.map((client) => (
+                    <div key={client.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
                           <h3 className="font-semibold text-foreground">{client.name}</h3>
                           <Badge variant="outline" className="text-xs">
-                            {client.type}
+                            {client.type.toUpperCase()}
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {client.cameras} câmeras • {client.alerts} alertas pendentes
+                          {client.email || 'Sem email'} • {client.phone || 'Sem telefone'}
                         </p>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <Badge variant={client.plan === "Premium" ? "default" : "secondary"}>
-                          {client.plan}
+                        <Badge variant={client.plan === "premium" || client.plan === "enterprise" ? "default" : "secondary"}>
+                          {client.plan === "premium" ? "Premium" : client.plan === "enterprise" ? "Empresarial" : "Básico"}
                         </Badge>
-                        <Badge variant={client.status === "Online" ? "default" : "destructive"}>
-                          {client.status}
+                        <Badge variant={client.status === "active" ? "default" : "destructive"}>
+                          {client.status === "active" ? "Ativo" : client.status === "suspended" ? "Suspenso" : "Inativo"}
                         </Badge>
                         <Button variant="outline" size="sm">
                           <Eye className="w-4 h-4 mr-1" />

@@ -2,25 +2,60 @@ import { ArrowLeft, Building2, Key, Shield, Globe, Users, Activity } from "lucid
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useEffect } from "react";
+import { useSupabaseData } from "@/hooks/useSupabase";
 
 interface SuperAdminDashboardProps {
   onBack: () => void;
 }
 
 const SuperAdminDashboard = ({ onBack }: SuperAdminDashboardProps) => {
+  const {
+    loading,
+    error,
+    tenants,
+    totalLicenses,
+    totalIPAuthorizations,
+    activeSessions,
+    fetchSuperAdminData
+  } = useSupabaseData();
+
+  useEffect(() => {
+    fetchSuperAdminData();
+  }, []);
+
+  const activeTenants = tenants.filter(t => t.status === 'active').length;
+
   const stats = [
-    { title: "Parceiros Ativos", value: "24", change: "+3", icon: Building2, color: "text-security-primary" },
-    { title: "Licenças Emitidas", value: "1,247", change: "+127", icon: Key, color: "text-security-accent" },
-    { title: "IPs Autorizados", value: "156", change: "+12", icon: Globe, color: "text-security-success" },
-    { title: "Sessões Ativas", value: "89", change: "-5", icon: Activity, color: "text-security-warning" }
+    { title: "Parceiros Ativos", value: activeTenants.toString(), change: "+3", icon: Building2, color: "text-security-primary" },
+    { title: "Licenças Emitidas", value: totalLicenses.toString(), change: "+127", icon: Key, color: "text-security-accent" },
+    { title: "IPs Autorizados", value: totalIPAuthorizations.toString(), change: "+12", icon: Globe, color: "text-security-success" },
+    { title: "Sessões Ativas", value: activeSessions.toString(), change: "-5", icon: Activity, color: "text-security-warning" }
   ];
 
-  const partners = [
-    { name: "SecureMax Ltda", clients: 45, cameras: 234, status: "Ativo", plan: "Premium" },
-    { name: "VigiTech Solutions", clients: 32, cameras: 178, status: "Ativo", plan: "Empresarial" },
-    { name: "Safety Guard Corp", clients: 28, cameras: 156, status: "Suspenso", plan: "Básico" },
-    { name: "ProSecurity Brasil", clients: 67, cameras: 389, status: "Ativo", plan: "Premium" }
-  ];
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-security-primary"></div>
+          <p className="mt-4 text-muted-foreground">Carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-destructive">Erro: {error}</p>
+          <Button onClick={fetchSuperAdminData} className="mt-4">
+            Tentar Novamente
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -81,20 +116,20 @@ const SuperAdminDashboard = ({ onBack }: SuperAdminDashboardProps) => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {partners.map((partner, index) => (
-                <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors">
+              {tenants.map((tenant) => (
+                <div key={tenant.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors">
                   <div className="flex-1">
-                    <h3 className="font-semibold text-foreground">{partner.name}</h3>
+                    <h3 className="font-semibold text-foreground">{tenant.name}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {partner.clients} clientes • {partner.cameras} câmeras
+                      {tenant.email} • {tenant.phone || 'Sem telefone'}
                     </p>
                   </div>
                   <div className="flex items-center space-x-4">
-                    <Badge variant={partner.plan === "Premium" ? "default" : "secondary"}>
-                      {partner.plan}
+                    <Badge variant={tenant.plan === "premium" || tenant.plan === "enterprise" ? "default" : "secondary"}>
+                      {tenant.plan === "premium" ? "Premium" : tenant.plan === "enterprise" ? "Empresarial" : "Básico"}
                     </Badge>
-                    <Badge variant={partner.status === "Ativo" ? "default" : "destructive"}>
-                      {partner.status}
+                    <Badge variant={tenant.status === "active" ? "default" : "destructive"}>
+                      {tenant.status === "active" ? "Ativo" : tenant.status === "suspended" ? "Suspenso" : "Inativo"}
                     </Badge>
                     <Button variant="outline" size="sm">
                       Gerenciar

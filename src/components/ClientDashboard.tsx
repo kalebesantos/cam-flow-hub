@@ -2,25 +2,79 @@ import { ArrowLeft, Camera, Play, Download, Bell, Smartphone, Monitor, Shield } 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useEffect } from "react";
+import { useSupabaseData } from "@/hooks/useSupabase";
 
 interface ClientDashboardProps {
   onBack: () => void;
 }
 
 const ClientDashboard = ({ onBack }: ClientDashboardProps) => {
-  const cameras = [
-    { name: "Entrada Principal", location: "Portaria", status: "Online", recording: true, alerts: 0 },
-    { name: "Estacionamento", location: "Área Externa", status: "Online", recording: true, alerts: 2 },
-    { name: "Recepção", location: "Térreo", status: "Online", recording: false, alerts: 0 },
-    { name: "Corredor Salas", location: "1º Andar", status: "Offline", recording: false, alerts: 1 }
-  ];
+  const {
+    loading,
+    error,
+    clientCameras,
+    clientAlerts,
+    fetchClientData
+  } = useSupabaseData();
 
-  const recentAlerts = [
-    { time: "14:32", type: "Movimento", camera: "Estacionamento", severity: "Médio" },
-    { time: "12:15", type: "Pessoa Detectada", camera: "Entrada Principal", severity: "Baixo" },
-    { time: "10:47", type: "Intrusão", camera: "Corredor Salas", severity: "Alto" },
-    { time: "09:23", type: "Movimento", camera: "Recepção", severity: "Baixo" }
-  ];
+  // For demo purposes, using the first client
+  const DEMO_CLIENT_ID = '650e8400-e29b-41d4-a716-446655440001';
+
+  useEffect(() => {
+    fetchClientData(DEMO_CLIENT_ID);
+  }, []);
+
+  const formatSeverityLabel = (severity: string) => {
+    switch (severity) {
+      case 'low': return 'Baixo';
+      case 'medium': return 'Médio';
+      case 'high': return 'Alto';
+      case 'critical': return 'Crítico';
+      default: return severity;
+    }
+  };
+
+  const formatTypeLabel = (type: string) => {
+    switch (type) {
+      case 'movement': return 'Movimento';
+      case 'person_detected': return 'Pessoa Detectada';
+      case 'intrusion': return 'Intrusão';
+      case 'object_detection': return 'Objeto Detectado';
+      default: return type;
+    }
+  };
+
+  const formatTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-security-primary"></div>
+          <p className="mt-4 text-muted-foreground">Carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-destructive">Erro: {error}</p>
+          <Button onClick={() => fetchClientData(DEMO_CLIENT_ID)} className="mt-4">
+            Tentar Novamente
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -68,43 +122,47 @@ const ClientDashboard = ({ onBack }: ClientDashboardProps) => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {cameras.map((camera, index) => (
-                    <div key={index} className="relative group">
-                      <div className="aspect-video bg-gradient-to-br from-muted to-muted/50 rounded-lg flex items-center justify-center border-2 border-dashed border-muted-foreground/30 hover:border-security-primary/50 transition-colors cursor-pointer">
-                        <div className="text-center">
-                          <Camera className={`w-8 h-8 mx-auto mb-2 ${camera.status === 'Online' ? 'text-security-success' : 'text-muted-foreground'}`} />
-                          <p className="text-sm font-medium text-foreground">{camera.name}</p>
-                          <p className="text-xs text-muted-foreground">{camera.location}</p>
-                        </div>
-                        
-                        {/* Status indicators */}
-                        <div className="absolute top-2 left-2 flex space-x-2">
-                          <Badge variant={camera.status === 'Online' ? 'default' : 'destructive'} className="text-xs">
-                            {camera.status}
-                          </Badge>
-                          {camera.recording && (
-                            <Badge variant="secondary" className="text-xs bg-security-danger text-white">
-                              ● REC
-                            </Badge>
-                          )}
-                        </div>
-                        
-                        {/* Alert badge */}
-                        {camera.alerts > 0 && (
-                          <div className="absolute top-2 right-2">
-                            <Badge variant="destructive" className="text-xs">
-                              {camera.alerts} alertas
-                            </Badge>
+                  {clientCameras.map((camera) => {
+                    const cameraAlerts = clientAlerts.filter(alert => alert.camera_id === camera.id && !alert.is_acknowledged);
+                    
+                    return (
+                      <div key={camera.id} className="relative group">
+                        <div className="aspect-video bg-gradient-to-br from-muted to-muted/50 rounded-lg flex items-center justify-center border-2 border-dashed border-muted-foreground/30 hover:border-security-primary/50 transition-colors cursor-pointer">
+                          <div className="text-center">
+                            <Camera className={`w-8 h-8 mx-auto mb-2 ${camera.status === 'online' ? 'text-security-success' : 'text-muted-foreground'}`} />
+                            <p className="text-sm font-medium text-foreground">{camera.name}</p>
+                            <p className="text-xs text-muted-foreground">{camera.location}</p>
                           </div>
-                        )}
-                        
-                        {/* Play overlay */}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all rounded-lg">
-                          <Play className="w-12 h-12 text-white" />
+                          
+                          {/* Status indicators */}
+                          <div className="absolute top-2 left-2 flex space-x-2">
+                            <Badge variant={camera.status === 'online' ? 'default' : 'destructive'} className="text-xs">
+                              {camera.status === 'online' ? 'Online' : camera.status === 'offline' ? 'Offline' : 'Manutenção'}
+                            </Badge>
+                            {camera.is_recording && (
+                              <Badge variant="secondary" className="text-xs bg-security-danger text-white">
+                                ● REC
+                              </Badge>
+                            )}
+                          </div>
+                          
+                          {/* Alert badge */}
+                          {cameraAlerts.length > 0 && (
+                            <div className="absolute top-2 right-2">
+                              <Badge variant="destructive" className="text-xs">
+                                {cameraAlerts.length} alertas
+                              </Badge>
+                            </div>
+                          )}
+                          
+                          {/* Play overlay */}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all rounded-lg">
+                            <Play className="w-12 h-12 text-white" />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -124,23 +182,27 @@ const ClientDashboard = ({ onBack }: ClientDashboardProps) => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {recentAlerts.map((alert, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30 transition-colors">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <Badge 
-                            variant={alert.severity === 'Alto' ? 'destructive' : alert.severity === 'Médio' ? 'default' : 'secondary'}
-                            className="text-xs"
-                          >
-                            {alert.severity}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">{alert.time}</span>
+                  {clientAlerts.map((alert) => {
+                    const camera = clientCameras.find(c => c.id === alert.camera_id);
+                    
+                    return (
+                      <div key={alert.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2">
+                            <Badge 
+                              variant={alert.severity === 'high' || alert.severity === 'critical' ? 'destructive' : alert.severity === 'medium' ? 'default' : 'secondary'}
+                              className="text-xs"
+                            >
+                              {formatSeverityLabel(alert.severity)}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">{formatTime(alert.created_at)}</span>
+                          </div>
+                          <p className="text-sm font-medium text-foreground">{formatTypeLabel(alert.type)}</p>
+                          <p className="text-xs text-muted-foreground">{camera?.name || 'Câmera desconhecida'}</p>
                         </div>
-                        <p className="text-sm font-medium text-foreground">{alert.type}</p>
-                        <p className="text-xs text-muted-foreground">{alert.camera}</p>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
