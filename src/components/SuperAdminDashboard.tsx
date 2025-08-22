@@ -14,9 +14,9 @@ const SuperAdminDashboard = ({ onBack }: SuperAdminDashboardProps) => {
     loading,
     error,
     tenants,
-    totalLicenses,
-    totalIPAuthorizations,
-    activeSessions,
+    licenses,
+    ipAuthorizations,
+    sessions,
     fetchSuperAdminData
   } = useSupabaseData();
 
@@ -27,10 +27,10 @@ const SuperAdminDashboard = ({ onBack }: SuperAdminDashboardProps) => {
   const activeTenants = tenants.filter(t => t.status === 'active').length;
 
   const stats = [
-    { title: "Parceiros Ativos", value: activeTenants.toString(), change: "+3", icon: Building2, color: "text-security-primary" },
-    { title: "Licenças Emitidas", value: totalLicenses.toString(), change: "+127", icon: Key, color: "text-security-accent" },
-    { title: "IPs Autorizados", value: totalIPAuthorizations.toString(), change: "+12", icon: Globe, color: "text-security-success" },
-    { title: "Sessões Ativas", value: activeSessions.toString(), change: "-5", icon: Activity, color: "text-security-warning" }
+    { title: "Parceiros Ativos", value: tenants.filter(t => t.status === 'active').length.toString(), change: "+3", icon: Building2, color: "text-security-primary" },
+    { title: "Licenças Emitidas", value: licenses.length.toString(), change: "+12", icon: Shield, color: "text-security-accent" },
+    { title: "IPs Autorizados", value: ipAuthorizations.filter(ip => ip.is_active).length.toString(), change: "+8", icon: Globe, color: "text-security-success" },
+    { title: "Sessões Ativas", value: sessions.filter(s => s.is_active).length.toString(), change: "+15", icon: Activity, color: "text-security-warning" }
   ];
 
   if (loading) {

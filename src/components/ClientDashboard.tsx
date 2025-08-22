@@ -13,8 +13,8 @@ const ClientDashboard = ({ onBack }: ClientDashboardProps) => {
   const {
     loading,
     error,
-    clientCameras,
-    clientAlerts,
+    cameras,
+    alerts,
     fetchClientData
   } = useSupabaseData();
 
@@ -22,7 +22,7 @@ const ClientDashboard = ({ onBack }: ClientDashboardProps) => {
   const DEMO_CLIENT_ID = '650e8400-e29b-41d4-a716-446655440001';
 
   useEffect(() => {
-    fetchClientData(DEMO_CLIENT_ID);
+    fetchClientData();
   }, []);
 
   const formatSeverityLabel = (severity: string) => {
@@ -68,9 +68,9 @@ const ClientDashboard = ({ onBack }: ClientDashboardProps) => {
       <div className="min-h-screen bg-background p-6 flex items-center justify-center">
         <div className="text-center">
           <p className="text-destructive">Erro: {error}</p>
-          <Button onClick={() => fetchClientData(DEMO_CLIENT_ID)} className="mt-4">
-            Tentar Novamente
-          </Button>
+           <Button onClick={() => fetchClientData()} className="mt-4">
+             Tentar Novamente
+           </Button>
         </div>
       </div>
     );
@@ -121,9 +121,9 @@ const ClientDashboard = ({ onBack }: ClientDashboardProps) => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {clientCameras.map((camera) => {
-                    const cameraAlerts = clientAlerts.filter(alert => alert.camera_id === camera.id && !alert.is_acknowledged);
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   {cameras.map((camera) => {
+                     const cameraAlerts = alerts.filter(alert => alert.camera_id === camera.id && !alert.is_acknowledged);
                     
                     return (
                       <div key={camera.id} className="relative group">
@@ -181,9 +181,9 @@ const ClientDashboard = ({ onBack }: ClientDashboardProps) => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {clientAlerts.map((alert) => {
-                    const camera = clientCameras.find(c => c.id === alert.camera_id);
+                 <div className="space-y-3">
+                   {alerts.map((alert) => {
+                     const camera = cameras.find(c => c.id === alert.camera_id);
                     
                     return (
                       <div key={alert.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30 transition-colors">

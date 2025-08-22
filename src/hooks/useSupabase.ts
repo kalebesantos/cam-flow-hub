@@ -109,17 +109,15 @@ export const useSupabaseData = () => {
 
   // Super Admin Data
   const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [totalLicenses, setTotalLicenses] = useState(0);
-  const [totalIPAuthorizations, setTotalIPAuthorizations] = useState(0);
-  const [activeSessions, setActiveSessions] = useState(0);
+  const [licenses, setLicenses] = useState<License[]>([]);
+  const [ipAuthorizations, setIPAuthorizations] = useState<IPAuthorization[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
 
-  // Partner Data
-  const [partnerClients, setPartnerClients] = useState<Client[]>([]);
-  const [partnerStats, setPartnerStats] = useState<TenantStats | null>(null);
-
-  // Client Data
-  const [clientCameras, setClientCameras] = useState<Camera[]>([]);
-  const [clientAlerts, setClientAlerts] = useState<Alert[]>([]);
+  // Partner Data  
+  const [clients, setClients] = useState<Client[]>([]);
+  const [cameras, setCameras] = useState<Camera[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [tenantStats, setTenantStats] = useState<TenantStats[]>([]);
 
   const fetchSuperAdminData = async () => {
     try {
@@ -127,9 +125,9 @@ export const useSupabaseData = () => {
       
       const [tenantsRes, licensesRes, ipsRes, sessionsRes] = await Promise.all([
         supabase.from('tenants').select('*'),
-        supabase.from('licenses').select('id'),
-        supabase.from('ip_authorizations').select('id').eq('is_active', true),
-        supabase.from('sessions').select('id').eq('is_active', true)
+        supabase.from('licenses').select('*'),
+        supabase.from('ip_authorizations').select('*').eq('is_active', true),
+        supabase.from('sessions').select('*').eq('is_active', true)
       ]);
 
       if (tenantsRes.error) throw tenantsRes.error;
@@ -138,9 +136,15 @@ export const useSupabaseData = () => {
       if (sessionsRes.error) throw sessionsRes.error;
 
       setTenants(tenantsRes.data || []);
-      setTotalLicenses(licensesRes.data?.length || 0);
-      setTotalIPAuthorizations(ipsRes.data?.length || 0);
-      setActiveSessions(sessionsRes.data?.length || 0);
+      setLicenses(licensesRes.data || []);
+      setIPAuthorizations((ipsRes.data || []).map(ip => ({
+        ...ip,
+        ip_address: String(ip.ip_address)
+      })));
+      setSessions((sessionsRes.data || []).map(session => ({
+        ...session,
+        ip_address: String(session.ip_address)
+      })));
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar dados');
@@ -149,19 +153,26 @@ export const useSupabaseData = () => {
     }
   };
 
-  const fetchPartnerData = async (tenantId: string) => {
+  const fetchPartnerData = async () => {
     try {
       setLoading(true);
       
-      const [clientsRes, statsRes] = await Promise.all([
-        supabase.from('clients').select('*').eq('tenant_id', tenantId),
-        supabase.from('tenant_stats').select('*').eq('tenant_id', tenantId).single()
+      const [clientsRes, camerasRes, alertsRes, statsRes] = await Promise.all([
+        supabase.from('clients').select('*'),
+        supabase.from('cameras').select('*'),
+        supabase.from('alerts').select('*').order('created_at', { ascending: false }).limit(10),
+        supabase.from('tenant_stats').select('*')
       ]);
 
       if (clientsRes.error) throw clientsRes.error;
+      if (camerasRes.error) throw camerasRes.error;
+      if (alertsRes.error) throw alertsRes.error;
+      if (statsRes.error) throw statsRes.error;
       
-      setPartnerClients(clientsRes.data || []);
-      setPartnerStats(statsRes.data);
+      setClients(clientsRes.data || []);
+      setCameras(camerasRes.data || []);
+      setAlerts(alertsRes.data || []);
+      setTenantStats(statsRes.data || []);
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar dados do parceiro');
@@ -170,16 +181,15 @@ export const useSupabaseData = () => {
     }
   };
 
-  const fetchClientData = async (clientId: string) => {
+  const fetchClientData = async () => {
     try {
       setLoading(true);
       
       const [camerasRes, alertsRes] = await Promise.all([
-        supabase.from('cameras').select('*').eq('client_id', clientId),
+        supabase.from('cameras').select('*'),
         supabase
           .from('alerts')
           .select('*')
-          .eq('client_id', clientId)
           .order('created_at', { ascending: false })
           .limit(10)
       ]);
@@ -187,8 +197,8 @@ export const useSupabaseData = () => {
       if (camerasRes.error) throw camerasRes.error;
       if (alertsRes.error) throw alertsRes.error;
 
-      setClientCameras(camerasRes.data || []);
-      setClientAlerts(alertsRes.data || []);
+      setCameras(camerasRes.data || []);
+      setAlerts(alertsRes.data || []);
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar dados do cliente');
@@ -203,19 +213,19 @@ export const useSupabaseData = () => {
     
     // Super Admin Data
     tenants,
-    totalLicenses,
-    totalIPAuthorizations,
-    activeSessions,
+    licenses,
+    ipAuthorizations,
+    sessions,
     fetchSuperAdminData,
     
     // Partner Data
-    partnerClients,
-    partnerStats,
+    clients,
+    cameras,
+    alerts,
+    tenantStats,
     fetchPartnerData,
     
-    // Client Data
-    clientCameras,
-    clientAlerts,
+    // Client Data - reusing cameras and alerts
     fetchClientData
   };
 };
