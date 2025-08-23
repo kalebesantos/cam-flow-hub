@@ -28,7 +28,7 @@ export const useAuth = () => {
       }
     );
 
-    // Verifica sessão existente
+    // Verifica sessão atual
     supabase.auth.getSession().then(({ data: { session } }) => {
       setAuthState({
         user: session?.user ?? null,
@@ -42,11 +42,7 @@ export const useAuth = () => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
       toast.success('Login realizado com sucesso!');
@@ -57,38 +53,26 @@ export const useAuth = () => {
     }
   };
 
-  const signUp = async (email: string, password: string, fullName?: string, role: 'admin' | 'partner' | 'client' = 'client') => {
+  const signUp = async (email: string, password: string) => {
     try {
-      const redirectUrl = `${window.location.origin}/`;
-
-      // Cria usuário no Auth
+      // Cria o usuário sem redirecionamento
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: redirectUrl
-        }
       });
 
       if (error) throw error;
 
-      const userId = data.user?.id;
-      if (!userId) throw new Error('Usuário não foi criado corretamente');
-
-      // Cria profile na tabela public.profiles
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: userId,
-          full_name: fullName || '',
-          role,
-          created_at: new Date(),
-          updated_at: new Date()
+      // Cria o profile imediatamente
+      if (data.user) {
+        await supabase.from('profiles').insert({
+          id: data.user.id,
+          email: data.user.email,
+          role: 'client', // ou 'admin', se for admin
         });
+      }
 
-      if (profileError) throw profileError;
-
-      toast.success('Conta criada com sucesso! Verifique seu email.');
+      toast.success('Conta criada com sucesso!');
       return { error: null };
     } catch (error: any) {
       toast.error(error.message || 'Erro ao criar conta');
