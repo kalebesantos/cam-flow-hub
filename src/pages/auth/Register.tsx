@@ -22,16 +22,18 @@ const registerSchema = z.object({
 type RegisterForm = z.infer<typeof registerSchema>;
 
 const Register = () => {
-  const { user, signUp } = useAuth();
+  const { user, role, signUp } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema)
   });
 
-  // Redirect if already authenticated
-  if (user) {
-    return <Navigate to="/" replace />;
+  // Redireciona automaticamente com base na role
+  if (user && role) {
+    if (role === 'admin') return <Navigate to="/admin/partners" replace />;
+    if (role === 'partner') return <Navigate to="/partner/dashboard" replace />;
+    if (role === 'client') return <Navigate to="/client/dashboard" replace />;
   }
 
   const onSubmit = async (data: RegisterForm) => {
@@ -50,60 +52,29 @@ const Register = () => {
             </div>
           </div>
           <CardTitle className="text-2xl">Criar Conta</CardTitle>
-          <CardDescription>
-            Registre-se para ter acesso ao sistema
-          </CardDescription>
+          <CardDescription>Registre-se para ter acesso ao sistema</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                {...register('email')}
-                className={errors.email ? 'border-destructive' : ''}
-              />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
-              )}
+              <Input id="email" type="email" placeholder="seu@email.com" {...register('email')} className={errors.email ? 'border-destructive' : ''} />
+              {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                {...register('password')}
-                className={errors.password ? 'border-destructive' : ''}
-              />
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password.message}</p>
-              )}
+              <Input id="password" type="password" placeholder="••••••••" {...register('password')} className={errors.password ? 'border-destructive' : ''} />
+              {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                {...register('confirmPassword')}
-                className={errors.confirmPassword ? 'border-destructive' : ''}
-              />
-              {errors.confirmPassword && (
-                <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
-              )}
+              <Input id="confirmPassword" type="password" placeholder="••••••••" {...register('confirmPassword')} className={errors.confirmPassword ? 'border-destructive' : ''} />
+              {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>}
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full" 
-              variant="security"
-              disabled={isLoading}
-            >
+            <Button type="submit" className="w-full" variant="security" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Criar Conta
             </Button>
