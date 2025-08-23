@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useSupabaseData } from '@/hooks/useSupabase';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
-import { ArrowLeft, Users, Camera, AlertTriangle, TrendingUp, Plus, Settings } from 'lucide-react';
+import { ArrowLeft, Users, Camera, AlertTriangle, TrendingUp, Plus, Settings, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const PartnerDashboard = () => {
@@ -18,7 +18,8 @@ const PartnerDashboard = () => {
     tenantStats, 
     loading, 
     error, 
-    fetchPartnerData 
+    fetchPartnerData, 
+    deleteClient 
   } = useSupabaseData();
 
   const tenantId = getUserTenant();
@@ -56,6 +57,12 @@ const PartnerDashboard = () => {
       format: (value: number) => `R$ ${value.toLocaleString('pt-BR')}`
     }
   ];
+
+  const handleDeleteClient = (clientId: string) => {
+    if (confirm('Tem certeza que deseja deletar este cliente?')) {
+      deleteClient(clientId);
+    }
+  };
 
   if (loading) {
     return (
@@ -196,9 +203,18 @@ const PartnerDashboard = () => {
                         {client.type === 'pj' ? 'Pessoa Jurídica' : 'Pessoa Física'}
                       </p>
                     </div>
-                    <Badge variant={client.status === 'active' ? 'default' : 'secondary'}>
-                      {client.status === 'active' ? 'Ativo' : 'Inativo'}
-                    </Badge>
+                    <div className="flex gap-2">
+                      <Badge variant={client.status === 'active' ? 'default' : 'secondary'}>
+                        {client.status === 'active' ? 'Ativo' : 'Inativo'}
+                      </Badge>
+                      <Button 
+                        size="sm" 
+                        variant="destructive" 
+                        onClick={() => handleDeleteClient(client.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -212,33 +228,33 @@ const PartnerDashboard = () => {
               <CardDescription>Últimos alertas do sistema</CardDescription>
             </CardHeader>
             <CardContent>
-          <div className="space-y-4">
-            {alerts?.slice(0, 3).map((alert) => (
-              <div key={alert.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <h4 className="font-medium">{alert.message}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {new Date(alert.created_at).toLocaleString('pt-BR')}
-                  </p>
-                </div>
-                <Badge 
-                  variant={
-                    alert.severity === 'high' ? 'destructive' : 
-                    alert.severity === 'medium' ? 'default' : 'secondary'
-                  }
-                >
-                  {alert.severity === 'high' ? 'Alta' : 
-                   alert.severity === 'medium' ? 'Média' : 'Baixa'}
-                </Badge>
+              <div className="space-y-4">
+                {alerts?.slice(0, 3).map((alert) => (
+                  <div key={alert.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <h4 className="font-medium">{alert.message}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(alert.created_at).toLocaleString('pt-BR')}
+                      </p>
+                    </div>
+                    <Badge 
+                      variant={
+                        alert.severity === 'high' ? 'destructive' : 
+                        alert.severity === 'medium' ? 'default' : 'secondary'
+                      }
+                    >
+                      {alert.severity === 'high' ? 'Alta' : 
+                       alert.severity === 'medium' ? 'Média' : 'Baixa'}
+                    </Badge>
+                  </div>
+                ))}
+                
+                {(!alerts || alerts.length === 0) && (
+                  <div className="text-center py-4">
+                    <p className="text-muted-foreground text-sm">Nenhum alerta recente</p>
+                  </div>
+                )}
               </div>
-            ))}
-            
-            {(!alerts || alerts.length === 0) && (
-              <div className="text-center py-4">
-                <p className="text-muted-foreground text-sm">Nenhum alerta recente</p>
-              </div>
-            )}
-          </div>
             </CardContent>
           </Card>
         </div>

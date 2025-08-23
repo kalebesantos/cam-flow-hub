@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface Tenant {
@@ -113,7 +113,7 @@ export const useSupabaseData = () => {
   const [ipAuthorizations, setIPAuthorizations] = useState<IPAuthorization[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
 
-  // Partner Data  
+  // Partner Data
   const [clients, setClients] = useState<Client[]>([]);
   const [cameras, setCameras] = useState<Camera[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -122,12 +122,11 @@ export const useSupabaseData = () => {
   const fetchSuperAdminData = async () => {
     try {
       setLoading(true);
-      
       const [tenantsRes, licensesRes, ipsRes, sessionsRes] = await Promise.all([
         supabase.from('tenants').select('*'),
         supabase.from('licenses').select('*'),
         supabase.from('ip_authorizations').select('*').eq('is_active', true),
-        supabase.from('sessions').select('*').eq('is_active', true)
+        supabase.from('sessions').select('*').eq('is_active', true),
       ]);
 
       if (tenantsRes.error) throw tenantsRes.error;
@@ -137,15 +136,8 @@ export const useSupabaseData = () => {
 
       setTenants(tenantsRes.data || []);
       setLicenses(licensesRes.data || []);
-      setIPAuthorizations((ipsRes.data || []).map(ip => ({
-        ...ip,
-        ip_address: String(ip.ip_address)
-      })));
-      setSessions((sessionsRes.data || []).map(session => ({
-        ...session,
-        ip_address: String(session.ip_address)
-      })));
-
+      setIPAuthorizations((ipsRes.data || []).map(ip => ({ ...ip, ip_address: String(ip.ip_address) })));
+      setSessions((sessionsRes.data || []).map(session => ({ ...session, ip_address: String(session.ip_address) })));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar dados');
     } finally {
@@ -156,24 +148,22 @@ export const useSupabaseData = () => {
   const fetchPartnerData = async () => {
     try {
       setLoading(true);
-      
       const [clientsRes, camerasRes, alertsRes, statsRes] = await Promise.all([
         supabase.from('clients').select('*'),
         supabase.from('cameras').select('*'),
         supabase.from('alerts').select('*').order('created_at', { ascending: false }).limit(10),
-        supabase.from('tenant_stats').select('*')
+        supabase.from('tenant_stats').select('*'),
       ]);
 
       if (clientsRes.error) throw clientsRes.error;
       if (camerasRes.error) throw camerasRes.error;
       if (alertsRes.error) throw alertsRes.error;
       if (statsRes.error) throw statsRes.error;
-      
+
       setClients(clientsRes.data || []);
       setCameras(camerasRes.data || []);
       setAlerts(alertsRes.data || []);
       setTenantStats(statsRes.data || []);
-
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar dados do parceiro');
     } finally {
@@ -184,14 +174,9 @@ export const useSupabaseData = () => {
   const fetchClientData = async () => {
     try {
       setLoading(true);
-      
       const [camerasRes, alertsRes] = await Promise.all([
         supabase.from('cameras').select('*'),
-        supabase
-          .from('alerts')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(10)
+        supabase.from('alerts').select('*').order('created_at', { ascending: false }).limit(10),
       ]);
 
       if (camerasRes.error) throw camerasRes.error;
@@ -199,9 +184,21 @@ export const useSupabaseData = () => {
 
       setCameras(camerasRes.data || []);
       setAlerts(alertsRes.data || []);
-
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar dados do cliente');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteTenant = async (tenantId: string) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.from('tenants').delete().eq('id', tenantId);
+      if (error) throw error;
+      setTenants(prev => prev.filter(t => t.id !== tenantId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao deletar parceiro');
     } finally {
       setLoading(false);
     }
@@ -210,22 +207,23 @@ export const useSupabaseData = () => {
   return {
     loading,
     error,
-    
+
     // Super Admin Data
     tenants,
     licenses,
     ipAuthorizations,
     sessions,
     fetchSuperAdminData,
-    
+    deleteTenant,
+
     // Partner Data
     clients,
     cameras,
     alerts,
     tenantStats,
     fetchPartnerData,
-    
-    // Client Data - reusing cameras and alerts
-    fetchClientData
+
+    // Client Data
+    fetchClientData,
   };
 };
