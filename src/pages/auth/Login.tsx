@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,33 +20,12 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 const Login = () => {
   const { user, signIn } = useAuth();
+  const { getPrimaryRole, loading: permissionsLoading } = usePermissions();
   const [isLoading, setIsLoading] = useState(false);
-  const [redirectRole, setRedirectRole] = useState<string | null>(null);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema)
   });
-
-  // Se já estiver autenticado, buscar role
-  useEffect(() => {
-    if (user) {
-      (async () => {
-        try {
-          const { data: userRole } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', user.id)
-            .single();
-
-          if (userRole?.role) {
-            setRedirectRole(userRole.role);
-          }
-        } catch (error) {
-          console.error('Error fetching user role:', error);
-        }
-      })();
-    }
-  }, [user]);
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
@@ -54,11 +33,14 @@ const Login = () => {
     setIsLoading(false);
   };
 
+  // Get primary role for redirection
+  const primaryRole = getPrimaryRole();
+
   // Redireciona conforme role
-  if (redirectRole) {
-    if (redirectRole === 'super_admin') return <Navigate to="/admin" replace />;
-    if (redirectRole === 'partner_admin') return <Navigate to="/partner" replace />;
-    if (redirectRole === 'client_user') return <Navigate to="/client" replace />;
+  if (user && !permissionsLoading && primaryRole) {
+    if (primaryRole === 'super_admin') return <Navigate to="/admin" replace />;
+    if (primaryRole === 'partner_admin') return <Navigate to="/partner" replace />;
+    if (primaryRole === 'client_user') return <Navigate to="/client" replace />;
   }
 
   return (
