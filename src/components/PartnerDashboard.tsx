@@ -26,10 +26,10 @@ const PartnerDashboard = ({ onBack }: PartnerDashboardProps) => {
   }, []);
 
   const stats = [
-    { title: "Clientes Ativos", value: partnerStats?.active_clients?.toString() || "0", change: "+5", icon: Users, color: "text-security-primary" },
-    { title: "Câmeras Online", value: partnerStats?.online_cameras?.toString() || "0", change: "+12", icon: Camera, color: "text-security-success" },
-    { title: "Alertas IA (24h)", value: partnerStats?.monthly_alerts?.toString() || "0", change: "-3", icon: AlertTriangle, color: "text-security-warning" },
-    { title: "Receita Mensal", value: `R$ ${(partnerStats?.monthly_revenue || 0).toLocaleString('pt-BR')}`, change: "+8%", icon: TrendingUp, color: "text-security-accent" }
+    { title: "Clientes Ativos", value: partnerStats?.[0]?.active_clients?.toString() || "0", change: "+5", icon: Users, color: "text-security-primary" },
+    { title: "Câmeras Online", value: partnerStats?.[0]?.online_cameras?.toString() || "0", change: "+12", icon: Camera, color: "text-security-success" },
+    { title: "Alertas IA (24h)", value: partnerStats?.[0]?.monthly_alerts?.toString() || "0", change: "-3", icon: AlertTriangle, color: "text-security-warning" },
+    { title: "Receita Mensal", value: `R$ ${(partnerStats?.[0]?.monthly_revenue || 0).toLocaleString('pt-BR')}`, change: "+8%", icon: TrendingUp, color: "text-security-accent" }
   ];
 
   if (loading) {

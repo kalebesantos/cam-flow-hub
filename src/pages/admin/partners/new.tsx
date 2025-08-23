@@ -26,7 +26,7 @@ const AdminPartnersNew = () => {
 
     setLoading(true);
     try {
-      await createTenant({ name, email, plan, status });
+      await createTenant({ name, email, plan });
       await fetchSuperAdminData();
       navigate('/admin/partners');
     } catch (err) {

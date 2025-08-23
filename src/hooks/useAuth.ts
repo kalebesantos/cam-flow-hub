@@ -3,16 +3,6 @@ import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// Se você não gerou os tipos, pode criar uma interface manual para profiles
-interface Profile {
-  id: string;
-  email: string | null;
-  role: 'super_admin' | 'partner_admin' | 'client_user';
-  tenant_id?: string | null;
-  created_at?: string;
-  updated_at?: string;
-}
-
 export interface AuthState {
   user: User | null;
   session: Session | null;
@@ -64,35 +54,7 @@ export const useAuth = () => {
     }
   };
 
-  const signUp = async (email: string, password: string) => {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles' as any) // 👈 força a tipagem (já que seu client não conhece a tabela)
-          .insert<Profile>({
-            id: data.user.id,
-            email: data.user.email,
-            role: 'client_user', // 👈 usar enum válido
-          });
-
-        if (profileError) throw profileError;
-      }
-
-      toast.success('Conta criada com sucesso!');
-      return { error: null };
-    } catch (error) {
-      const e = error as AuthError;
-      toast.error(e.message || 'Erro ao criar conta');
-      return { error: e };
-    }
-  };
+  // Removed signUp function - users are created through admin panels only
 
   const signOut = async () => {
     try {
@@ -109,7 +71,6 @@ export const useAuth = () => {
   return {
     ...authState,
     signIn,
-    signUp,
-    signOut
+    signOut,
   };
 };

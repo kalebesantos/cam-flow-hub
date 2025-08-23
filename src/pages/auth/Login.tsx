@@ -31,14 +31,18 @@ const Login = () => {
   useEffect(() => {
     if (user) {
       (async () => {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
+        try {
+          const { data: userRole } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id)
+            .single();
 
-        if (profile?.role) {
-          setRedirectRole(profile.role);
+          if (userRole?.role) {
+            setRedirectRole(userRole.role);
+          }
+        } catch (error) {
+          console.error('Error fetching user role:', error);
         }
       })();
     }
@@ -52,9 +56,9 @@ const Login = () => {
 
   // Redireciona conforme role
   if (redirectRole) {
-    if (redirectRole === 'admin') return <Navigate to="/admin" replace />;
-    if (redirectRole === 'partner') return <Navigate to="/partner" replace />;
-    if (redirectRole === 'client') return <Navigate to="/client" replace />;
+    if (redirectRole === 'super_admin') return <Navigate to="/admin" replace />;
+    if (redirectRole === 'partner_admin') return <Navigate to="/partner" replace />;
+    if (redirectRole === 'client_user') return <Navigate to="/client" replace />;
   }
 
   return (
