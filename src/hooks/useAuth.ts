@@ -17,8 +17,9 @@ export const useAuth = () => {
   });
 
   useEffect(() => {
+    // Listener de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         setAuthState({
           user: session?.user ?? null,
           session,
@@ -27,6 +28,7 @@ export const useAuth = () => {
       }
     );
 
+    // Verifica sessão existente
     supabase.auth.getSession().then(({ data: { session } }) => {
       setAuthState({
         user: session?.user ?? null,
@@ -38,33 +40,53 @@ export const useAuth = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Cria profile com role
-  const createProfile = async (user: User, role: 'admin' | 'user' = 'user') => {
+  const signIn = async (email: string, password: string) => {
     try {
-      await supabase.from('profiles').upsert({
-        id: user.id,
-        email: user.email,
-        role
-      });
-    } catch (error) {
-      console.error('Erro ao criar profile:', error);
-    }
-  };
-
-  const signUp = async (email: string, password: string, isAdmin = false) => {
-    try {
-      const redirectUrl = `${window.location.origin}/`;
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
-        password,
-        options: { emailRedirectTo: redirectUrl }
+        password
       });
 
       if (error) throw error;
 
-      if (data.user) {
-        await createProfile(data.user, isAdmin ? 'admin' : 'user');
-      }
+      toast.success('Login realizado com sucesso!');
+      return { error: null };
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao fazer login');
+      return { error };
+    }
+  };
+
+  const signUp = async (email: string, password: string, fullName?: string, role: 'admin' | 'partner' | 'client' = 'client') => {
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+
+      // Cria usuário no Auth
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl
+        }
+      });
+
+      if (error) throw error;
+
+      const userId = data.user?.id;
+      if (!userId) throw new Error('Usuário não foi criado corretamente');
+
+      // Cria profile na tabela public.profiles
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          full_name: fullName || '',
+          role,
+          created_at: new Date(),
+          updated_at: new Date()
+        });
+
+      if (profileError) throw profileError;
 
       toast.success('Conta criada com sucesso! Verifique seu email.');
       return { error: null };
@@ -74,26 +96,11 @@ export const useAuth = () => {
     }
   };
 
-  const signIn = async (email: string, password: string) => {
-    try {
-      const { error, data } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-
-      // Atualiza estado
-      setAuthState({ ...authState, user: data.user ?? null, session: data.session });
-      toast.success('Login realizado com sucesso!');
-      return { error: null };
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao fazer login');
-      return { error };
-    }
-  };
-
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      setAuthState({ user: null, session: null, loading: false });
+
       toast.success('Logout realizado com sucesso!');
     } catch (error: any) {
       toast.error(error.message || 'Erro ao fazer logout');
@@ -102,8 +109,8 @@ export const useAuth = () => {
 
   return {
     ...authState,
-    signUp,
     signIn,
+    signUp,
     signOut
   };
 };

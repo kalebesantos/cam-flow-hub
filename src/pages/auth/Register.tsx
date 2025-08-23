@@ -11,9 +11,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2, Shield } from 'lucide-react';
 
 const registerSchema = z.object({
+  fullName: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
-  confirmPassword: z.string()
+  confirmPassword: z.string(),
+  role: z.enum(['admin', 'partner', 'client'])
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Senhas não conferem",
   path: ["confirmPassword"]
@@ -22,23 +24,21 @@ const registerSchema = z.object({
 type RegisterForm = z.infer<typeof registerSchema>;
 
 const Register = () => {
-  const { user, role, signUp } = useAuth();
+  const { user, signUp } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema)
   });
 
-  // Redireciona automaticamente com base na role
-  if (user && role) {
-    if (role === 'admin') return <Navigate to="/admin/partners" replace />;
-    if (role === 'partner') return <Navigate to="/partner/dashboard" replace />;
-    if (role === 'client') return <Navigate to="/client/dashboard" replace />;
+  // Redireciona se já autenticado
+  if (user) {
+    return <Navigate to="/" replace />;
   }
 
   const onSubmit = async (data: RegisterForm) => {
     setIsLoading(true);
-    await signUp(data.email, data.password);
+    await signUp(data.email, data.password, data.fullName, data.role);
     setIsLoading(false);
   };
 
@@ -52,29 +52,89 @@ const Register = () => {
             </div>
           </div>
           <CardTitle className="text-2xl">Criar Conta</CardTitle>
-          <CardDescription>Registre-se para ter acesso ao sistema</CardDescription>
+          <CardDescription>
+            Registre-se para ter acesso ao sistema
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="fullName">Nome Completo</Label>
+              <Input
+                id="fullName"
+                placeholder="Seu nome"
+                {...register('fullName')}
+                className={errors.fullName ? 'border-destructive' : ''}
+              />
+              {errors.fullName && (
+                <p className="text-sm text-destructive">{errors.fullName.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="seu@email.com" {...register('email')} className={errors.email ? 'border-destructive' : ''} />
-              {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+              <Input
+                id="email"
+                type="email"
+                placeholder="seu@email.com"
+                {...register('email')}
+                className={errors.email ? 'border-destructive' : ''}
+              />
+              {errors.email && (
+                <p className="text-sm text-destructive">{errors.email.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="password">Senha</Label>
-              <Input id="password" type="password" placeholder="••••••••" {...register('password')} className={errors.password ? 'border-destructive' : ''} />
-              {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                {...register('password')}
+                className={errors.password ? 'border-destructive' : ''}
+              />
+              {errors.password && (
+                <p className="text-sm text-destructive">{errors.password.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-              <Input id="confirmPassword" type="password" placeholder="••••••••" {...register('confirmPassword')} className={errors.confirmPassword ? 'border-destructive' : ''} />
-              {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>}
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="••••••••"
+                {...register('confirmPassword')}
+                className={errors.confirmPassword ? 'border-destructive' : ''}
+              />
+              {errors.confirmPassword && (
+                <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+              )}
             </div>
 
-            <Button type="submit" className="w-full" variant="security" disabled={isLoading}>
+            <div className="space-y-2">
+              <Label htmlFor="role">Tipo de Conta</Label>
+              <select
+                id="role"
+                {...register('role')}
+                className="w-full border rounded px-2 py-1"
+              >
+                <option value="admin">Administrador</option>
+                <option value="partner">Parceiro</option>
+                <option value="client">Cliente</option>
+              </select>
+              {errors.role && (
+                <p className="text-sm text-destructive">{errors.role.message}</p>
+              )}
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full" 
+              variant="security"
+              disabled={isLoading}
+            >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Criar Conta
             </Button>

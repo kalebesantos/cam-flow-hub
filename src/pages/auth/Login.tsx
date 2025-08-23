@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Link, Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,25 +19,43 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 
 const Login = () => {
-  const { user, role, signIn } = useAuth();
+  const { user, signIn } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [redirectRole, setRedirectRole] = useState<string | null>(null);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema)
   });
 
-  // Redireciona automaticamente com base na role
-  if (user && role) {
-    if (role === 'admin') return <Navigate to="/admin/partners" replace />;
-    if (role === 'partner') return <Navigate to="/partner/dashboard" replace />;
-    if (role === 'client') return <Navigate to="/client/dashboard" replace />;
-  }
+  // Se já estiver autenticado, buscar role
+  useEffect(() => {
+    if (user) {
+      (async () => {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (profile?.role) {
+          setRedirectRole(profile.role);
+        }
+      })();
+    }
+  }, [user]);
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
     await signIn(data.email, data.password);
     setIsLoading(false);
   };
+
+  // Redireciona conforme role
+  if (redirectRole) {
+    if (redirectRole === 'admin') return <Navigate to="/admin" replace />;
+    if (redirectRole === 'partner') return <Navigate to="/partner" replace />;
+    if (redirectRole === 'client') return <Navigate to="/client" replace />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
@@ -48,36 +67,50 @@ const Login = () => {
             </div>
           </div>
           <CardTitle className="text-2xl">Bem-vindo</CardTitle>
-          <CardDescription>Faça login em sua conta para acessar o sistema</CardDescription>
+          <CardDescription>
+            Faça login em sua conta para acessar o sistema
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="seu@email.com" {...register('email')} className={errors.email ? 'border-destructive' : ''} />
-              {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+              <Input
+                id="email"
+                type="email"
+                placeholder="seu@email.com"
+                {...register('email')}
+                className={errors.email ? 'border-destructive' : ''}
+              />
+              {errors.email && (
+                <p className="text-sm text-destructive">{errors.email.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="password">Senha</Label>
-              <Input id="password" type="password" placeholder="••••••••" {...register('password')} className={errors.password ? 'border-destructive' : ''} />
-              {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                {...register('password')}
+                className={errors.password ? 'border-destructive' : ''}
+              />
+              {errors.password && (
+                <p className="text-sm text-destructive">{errors.password.message}</p>
+              )}
             </div>
 
-            <Button type="submit" className="w-full" variant="security" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              variant="security"
+              disabled={isLoading}
+            >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Entrar
             </Button>
           </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              Não tem uma conta?{' '}
-              <Link to="/auth/register" className="text-security-primary hover:underline">
-                Criar conta
-              </Link>
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>
