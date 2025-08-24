@@ -401,6 +401,103 @@ export type Database = {
           },
         ]
       }
+      tenant_branding: {
+        Row: {
+          accent_color: string | null
+          company_name: string | null
+          created_at: string
+          custom_css: string | null
+          email_from_name: string | null
+          favicon_url: string | null
+          id: string
+          logo_url: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          accent_color?: string | null
+          company_name?: string | null
+          created_at?: string
+          custom_css?: string | null
+          email_from_name?: string | null
+          favicon_url?: string | null
+          id?: string
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          accent_color?: string | null
+          company_name?: string | null
+          created_at?: string
+          custom_css?: string | null
+          email_from_name?: string | null
+          favicon_url?: string | null
+          id?: string
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_branding_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_domains: {
+        Row: {
+          created_at: string
+          domain: string
+          id: string
+          is_active: boolean
+          is_primary: boolean
+          ssl_enabled: boolean
+          subdomain: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          domain: string
+          id?: string
+          is_active?: boolean
+          is_primary?: boolean
+          ssl_enabled?: boolean
+          subdomain?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          domain?: string
+          id?: string
+          is_active?: boolean
+          is_primary?: boolean
+          ssl_enabled?: boolean
+          subdomain?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_domains_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_stats: {
         Row: {
           active_clients: number
@@ -515,6 +612,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_tenant_by_domain: {
+        Args: { domain_name: string }
+        Returns: string
+      }
       get_user_tenant: {
         Args: { _user_id: string }
         Returns: string
