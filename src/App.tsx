@@ -11,45 +11,48 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import PartnerDashboard from "./pages/partner/Dashboard";
 import ClientDashboard from "./pages/client/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { TenantProvider } from "./components/TenantProvider";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth/login" element={<Login />} />
-          <Route path="/unauthorized" element={<Unauthorized />} />
-          
-          {/* Admin Routes */}
-          <Route path="/admin/*" element={
-            <ProtectedRoute requiredRole="super_admin">
-              <AdminDashboard />
-            </ProtectedRoute>
-          } />
-          
-          {/* Partner Routes */}
-          <Route path="/partner/*" element={
-            <ProtectedRoute requiredRole="partner_admin">
-              <PartnerDashboard />
-            </ProtectedRoute>
-          } />
-          
-          {/* Client Routes */}
-          <Route path="/client/*" element={
-            <ProtectedRoute requiredRole="client_user">
-              <ClientDashboard />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <TenantProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth/login" element={<Login />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin/*" element={
+              <ProtectedRoute requiredRole="super_admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            
+            {/* Partner Routes */}
+            <Route path="/partner/*" element={
+              <ProtectedRoute requiredRole="partner_admin">
+                <PartnerDashboard />
+              </ProtectedRoute>
+            } />
+            
+            {/* Client Routes */}
+            <Route path="/client/*" element={
+              <ProtectedRoute requiredRole="client_user">
+                <ClientDashboard />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </TenantProvider>
   </QueryClientProvider>
 );
 

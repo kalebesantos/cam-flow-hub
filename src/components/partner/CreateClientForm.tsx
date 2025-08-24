@@ -53,7 +53,8 @@ export const CreateClientForm = ({ onSuccess, onCancel }: CreateClientFormProps)
         throw new Error(data.error || 'Erro ao criar cliente');
       }
 
-      toast.success(`Cliente criado com sucesso! Senha temporária: ${data.password}`);
+      const clientUrlText = data.tenant_url ? `\nURL de acesso: ${data.tenant_url}` : '';
+      toast.success(`Cliente criado com sucesso!${clientUrlText}\nSenha temporária: ${data.password}`);
       
       // Reset form
       setFormData({

@@ -12,11 +12,19 @@ interface CreateUserRequest {
   fullName: string;
   role: 'partner_admin' | 'client_user';
   tenantId?: string;
+  tenant?: {
+    name: string;
+    email: string;
+    phone?: string;
+    address?: string;
+    plan: 'basic' | 'premium' | 'enterprise';
+  };
   clientData?: {
     name: string;
     type: 'pf' | 'pj';
     phone?: string;
     address?: string;
+    plan: 'basic' | 'premium' | 'enterprise';
   };
 }
 
@@ -48,9 +56,9 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
 
-    const { email, password, fullName, role, tenantId, clientData }: CreateUserRequest = await req.json();
+    const { email, password, fullName, role, tenantId, tenant, clientData }: CreateUserRequest = await req.json();
 
-    console.log('Creating user:', { email, role, tenantId });
+    console.log('Creating user:', { email, role, tenantId, tenant });
 
     // Verify the requesting user has permission
     const { data: { user: requestingUser } } = await supabase.auth.getUser();
@@ -78,6 +86,31 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Apenas partner admins podem criar clientes');
     }
 
+    let tenantData = null;
+
+    // If creating a partner, create tenant first
+    if (role === 'partner_admin' && tenant) {
+      const { data: newTenant, error: tenantError } = await supabase
+        .from('tenants')
+        .insert({
+          name: tenant.name,
+          email: tenant.email,
+          phone: tenant.phone,
+          address: tenant.address,
+          plan: tenant.plan,
+        })
+        .select()
+        .single();
+
+      if (tenantError) {
+        console.error('Error creating tenant:', tenantError);
+        throw tenantError;
+      }
+
+      tenantData = newTenant;
+      console.log('Tenant created successfully:', tenantData.id);
+    }
+
     // Generate password if not provided
     const userPassword = password || generateRandomPassword();
 
@@ -101,7 +134,10 @@ const handler = async (req: Request): Promise<Response> => {
     // Determine tenant ID for the new user
     let userTenantId = tenantId;
     
-    if (role === 'client_user') {
+    if (role === 'partner_admin' && tenantData) {
+      // For new partners, use the created tenant ID
+      userTenantId = tenantData.id;
+    } else if (role === 'client_user') {
       // For clients, use the partner's tenant
       userTenantId = requestingUserRole.tenant_id;
     }
@@ -132,6 +168,7 @@ const handler = async (req: Request): Promise<Response> => {
           phone: clientData.phone,
           address: clientData.address,
           type: clientData.type,
+          plan: clientData.plan,
           tenant_id: userTenantId,
         });
 
@@ -140,6 +177,24 @@ const handler = async (req: Request): Promise<Response> => {
         // Clean up created user if client creation fails
         await supabaseAdmin.auth.admin.deleteUser(userData.user.id);
         throw clientError;
+      }
+    }
+
+    // Generate tenant URL for partners and clients
+    let tenantUrl = null;
+    if (userTenantId) {
+      const { data: domainData } = await supabase
+        .from('tenant_domains')
+        .select('domain, subdomain')
+        .eq('tenant_id', userTenantId)
+        .eq('is_primary', true)
+        .single();
+      
+      if (domainData) {
+        tenantUrl = `https://${domainData.domain || domainData.subdomain}`;
+        if (role === 'client_user') {
+          tenantUrl += `/client/${email.split('@')[0]}`;
+        }
       }
     }
 
@@ -154,6 +209,8 @@ const handler = async (req: Request): Promise<Response> => {
         created_user_email: email,
         created_user_role: role,
         created_user_name: fullName,
+        tenant_url: tenantUrl,
+        tenant_name: tenantData?.name || null
       },
     });
 
@@ -162,6 +219,7 @@ const handler = async (req: Request): Promise<Response> => {
         success: true,
         user: userData.user,
         password: userPassword,
+        tenant_url: tenantUrl,
         message: 'Usuário criado com sucesso',
       }),
       {

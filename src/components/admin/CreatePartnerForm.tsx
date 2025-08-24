@@ -30,28 +30,19 @@ export const CreatePartnerForm = ({ onSuccess, onCancel }: CreatePartnerFormProp
     setLoading(true);
 
     try {
-      // First create the tenant
-      const { data: tenant, error: tenantError } = await supabase
-        .from('tenants')
-        .insert({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          plan: formData.plan,
-        })
-        .select()
-        .single();
-
-      if (tenantError) throw tenantError;
-
-      // Then create the partner admin user
+      // Create tenant and partner admin via edge function
       const { data, error } = await supabase.functions.invoke('create-user', {
         body: {
           email: formData.email,
           fullName: formData.fullName,
           role: 'partner_admin',
-          tenantId: tenant.id,
+          tenant: {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            address: formData.address,
+            plan: formData.plan,
+          }
         },
       });
 
@@ -61,7 +52,8 @@ export const CreatePartnerForm = ({ onSuccess, onCancel }: CreatePartnerFormProp
         throw new Error(data.error || 'Erro ao criar usuário');
       }
 
-      toast.success(`Parceiro criado com sucesso! Senha temporária: ${data.password}`);
+      const tenantUrlText = data.tenant_url ? `\nURL: ${data.tenant_url}` : '';
+      toast.success(`Parceiro criado com sucesso!${tenantUrlText}\nSenha temporária: ${data.password}`);
       
       // Reset form
       setFormData({
