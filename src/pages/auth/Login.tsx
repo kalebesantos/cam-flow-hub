@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,9 @@ const Login = () => {
   const { getPrimaryRole, loading: permissionsLoading } = usePermissions();
   const [isLoading, setIsLoading] = useState(false);
 
+  const location = useLocation();
+  const from = (location.state as any)?.from?.pathname || '/';
+
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema)
   });
@@ -37,10 +40,12 @@ const Login = () => {
   const primaryRole = getPrimaryRole();
 
   // Redireciona conforme role
-  if (user && !permissionsLoading && primaryRole) {
+  if (user && !permissionsLoading) {
     if (primaryRole === 'super_admin') return <Navigate to="/admin/dashboard" replace />;
     if (primaryRole === 'partner_admin') return <Navigate to="/partner/dashboard" replace />;
     if (primaryRole === 'client_user') return <Navigate to="/client/dashboard" replace />;
+    // Fallback para a página anterior ou home enquanto as roles ainda carregam
+    return <Navigate to={from === '/auth/login' ? '/' : from} replace />;
   }
 
   return (
