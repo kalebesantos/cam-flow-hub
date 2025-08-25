@@ -38,9 +38,9 @@ const Login = () => {
 
   // Redireciona conforme role
   if (user && !permissionsLoading && primaryRole) {
-    if (primaryRole === 'super_admin') return <Navigate to="/admin" replace />;
-    if (primaryRole === 'partner_admin') return <Navigate to="/partner" replace />;
-    if (primaryRole === 'client_user') return <Navigate to="/client" replace />;
+    if (primaryRole === 'super_admin') return <Navigate to="/admin/dashboard" replace />;
+    if (primaryRole === 'partner_admin') return <Navigate to="/partner/dashboard" replace />;
+    if (primaryRole === 'client_user') return <Navigate to="/client/dashboard" replace />;
   }
 
   return (
