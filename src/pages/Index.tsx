@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,14 +16,17 @@ const Index = () => {
   useEffect(() => {
     if (!loading && !permissionsLoading && user) {
       const primaryRole = getPrimaryRole();
-      
-      // Auto-redirect based on user role
+      console.log("[Index] redirect check -> user:", !!user, "role:", primaryRole);
+
       if (primaryRole === 'super_admin') {
-        navigate('/admin/dashboard');
+        navigate('/admin/dashboard', { replace: true });
       } else if (primaryRole === 'partner_admin') {
-        navigate('/partner/dashboard');
+        navigate('/partner/dashboard', { replace: true });
       } else if (primaryRole === 'client_user') {
-        navigate('/client/dashboard');
+        navigate('/client/dashboard', { replace: true });
+      } else {
+        // Sem role definida: envia para unauthorized para não travar na Home
+        navigate('/unauthorized', { replace: true });
       }
     }
   }, [user, loading, permissionsLoading, getPrimaryRole, navigate]);
@@ -136,7 +140,7 @@ const Index = () => {
     );
   }
 
-  // Fallback - should not reach here normally due to useEffect redirect
+  // Fallback - deve sair rápido com o useEffect acima
   return (
     <div className="min-h-screen flex items-center justify-center">
       <Card className="max-w-md">
